@@ -17,10 +17,35 @@ const getPostsByUserId = async (req, res) => {
                             as: 'UserDetail',
                             attributes: ['firstName', 'lastName', 'avatarPublicId']
                         },  
-                    ] },
+                    ] 
+                },
                 { model: models.PostLike,
                     as: 'PostLikes',
-                    group: ['Post.id'],}
+                    group: ['Post.id']
+                },
+                { model: models.Comment,
+                    as: 'Comments',
+                    include: [
+                        {
+                            model: models.User,
+                            as: 'author',
+                            attributes: ['id'],
+                            include: [
+                                {
+                                    model: models.UserDetails,
+                                    as: 'UserDetail',
+                                    attributes: ['firstName', 'lastName', 'avatarPublicId'],
+                                },
+                            ],
+                        },
+                        {
+                            model: models.CommentLike,
+                            as: 'CommentLikes',
+                            group: ['Comment.id'],
+                            attributes: ['id', 'userId'],
+                        }
+                    ],}
+                    
                     ]
         });
         res.json({ posts});

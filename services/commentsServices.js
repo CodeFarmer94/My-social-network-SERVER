@@ -1,5 +1,5 @@
-const { models, sequelize } = require('../sequelize/sequelize')
-const { Sequelize } = require('sequelize'); 
+const { models } = require('../sequelize/sequelize')
+
 
 const getPostCommentsById = async (req, res) => {
     try {

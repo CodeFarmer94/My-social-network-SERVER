@@ -1,4 +1,6 @@
 const { models } = require('../sequelize/sequelize');
+const { Op } = require('sequelize');
+
 
 const getUsers = async (req, res) => {
     try {
@@ -9,12 +11,24 @@ const getUsers = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
-
 const getMyUser = async (req, res) => {
     try {
         const { id } = req.user;
         const user = await models.UserDetails.findOne({
-            where: { userId: parseInt(id) }
+            where: { userId: parseInt(id) },
+            include: {
+                model: models.User,
+                as: 'user',
+                attributes: ['id'],
+                include: [
+                    {
+                    model: models.Friendship,
+                    as: 'sentFriendRequests'
+                    },
+                    {model: models.Friendship,
+                    as: 'receivedFriendRequests'}
+            ]
+            }
         });
         if (!user) return res.status(404).json({ message: "User not found" });
         res.json(user);
@@ -65,10 +79,10 @@ const updateMyUserAvatar = async (req, res) => {
             }
         }
 
-const getMyUserSettings = async (req, res) => {
+const getUserSettings = async (req, res) => {
     try {
-        console.log(req.user);
-        const { id } = req.user;
+        
+        const { id } = req.params;
         const userSettings = await models.UserSettings.findOne({
             where: { userId: parseInt(id) }
         });
@@ -106,9 +120,21 @@ const getUserDetailsById = async (req, res) => {
     try {
         const { id } = req.params;
         const user = await models.UserDetails.findOne({
-            where: { userId: parseInt(id) }
+            where: { userId: parseInt(id) },
+            include: {
+                model: models.User,
+                as: 'user',
+                attributes: ['id'],
+                include: [
+                    {
+                    model: models.Friendship,
+                    as: 'sentFriendRequests'
+                    },
+                    {model: models.Friendship,
+                    as: 'receivedFriendRequests'}
+            ]
+            }
         });
-        if (!user) return res.status(404).json({ message: "User not found" });
         res.json(user);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -144,6 +170,22 @@ const deleteUserById = async (req, res) => {
     }
 };
 
+async function searchUsers(req, res) {
+    const { searchInput } = req.params;
+    try {
+      const users = await models.UserDetails.findAll({
+        where: {
+          [Op.or]: [
+            { firstName: { [Op.like]: `%${searchInput}%` } },
+            { lastName: { [Op.like]: `%${searchInput}%` } },
+          ],
+        },
+      });
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+  }
 module.exports = {
     getUsers,
     createUser,
@@ -151,7 +193,8 @@ module.exports = {
     deleteUserById,
     getMyUser,
     updateMyUser,
-    getMyUserSettings,
+    getUserSettings,
     updateMyUserSettings,
     updateMyUserAvatar,
+    searchUsers
 };

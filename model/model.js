@@ -104,6 +104,11 @@ module.exports = (sequelize) => {
         },
         acceptedAt: DataTypes.DATE,
         rejectedAt: DataTypes.DATE,
+    },{
+        // prevent duplicate friend requests
+        indexes: [
+            { unique: true, fields: ['senderId', 'receiverId'] },
+        ],
     });
 
     const Comment = sequelize.define('Comment', {
@@ -156,7 +161,8 @@ module.exports = (sequelize) => {
             type: DataTypes.DATE,
             allowNull: true,
         },
-    });
+    }, 
+    );
 
     const Picture = sequelize.define('Picture', {
         id: {
@@ -176,17 +182,26 @@ module.exports = (sequelize) => {
         },
     
     });
-    const PostLike = sequelize.define('PostLike', {
-        id: {
-            type: DataTypes.INTEGER,
-            primaryKey: true,
-            autoIncrement: true,
+  
+const PostLike = sequelize.define('PostLike', {
+    id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+    },
+    createdAt: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
+    },
+}, {
+    // prevent duplicate likes on the same post by the same user
+    indexes: [
+        {
+            unique: true,
+            fields: ['userId', 'postId'],
         },
-        createdAt: {
-            type: DataTypes.DATE,
-            defaultValue: DataTypes.NOW,
-        },
-    });
+    ],
+});
 
     const CommentLike = sequelize.define('CommentLike', {
         id: {
@@ -212,20 +227,50 @@ module.exports = (sequelize) => {
         },
     });
     
-    
+    const Chat = sequelize.define('Chat', {
+        id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
+        },
+        createdAt: {
+            type: DataTypes.DATE,
+            defaultValue: DataTypes.NOW,
+        },
+    });
+
+    const userChat = sequelize.define('userChat', {
+       
+    });
+
+    const Message = sequelize.define('Message', {
+        id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
+        },
+        content: DataTypes.STRING,
+        createdAt: {
+            type: DataTypes.DATE,
+            defaultValue: DataTypes.NOW,
+        },
+    });
 
     // Define Associations
     
     User.hasMany(Comment, { foreignKey: 'authorId' });
     User.hasMany(Post, { foreignKey: 'authorId' });
     User.hasMany(Picture, { foreignKey: 'authorId' });
+    User.hasMany(Message, { foreignKey: 'authorId', as: 'messages' });
     User.hasMany(Friendship, { foreignKey: 'senderId', as: 'sentFriendRequests' });
     User.hasMany(Friendship, { foreignKey: 'receiverId', as: 'receivedFriendRequests' });
+    User.belongsToMany(Chat, { through: 'userChat' });
     User.hasMany(PostLike, { foreignKey: 'userId' });
     User.hasMany(CommentLike, { foreignKey: 'userId' });
     User.hasMany(PictureLike, { foreignKey: 'userId' });
     User.hasOne(UserDetails, { foreignKey: 'userId' });
     User.hasOne(UserSettings, { foreignKey: 'userId' });
+ 
     
     UserDetails.belongsTo(User, { foreignKey: 'userId', as: 'user' });
     UserSettings.belongsTo(User, { foreignKey: 'userId', as: 'user' });
@@ -255,7 +300,13 @@ module.exports = (sequelize) => {
     PictureLike.belongsTo(User, { foreignKey: 'userId' });
     PictureLike.belongsTo(Picture, { foreignKey: 'pictureId' });
 
-    
+    Chat.belongsToMany(User, { through: 'userChat' });
+    Chat.hasMany(Message, { foreignKey: 'chatId' });
+
+  
+    Message.belongsTo(Chat, { foreignKey: 'chatId' });
+    Message.belongsTo(User, { foreignKey: 'authorId', as: 'author' });
+
 
     return {
         User,
@@ -268,6 +319,8 @@ module.exports = (sequelize) => {
         PostLike,
         CommentLike,
         PictureLike,
-        
+        Message,
+        Chat,
+        userChat,
     };
 };

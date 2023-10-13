@@ -5,5 +5,6 @@ module.exports = {
         password: 'password',
         database: 'social_network',
         host: 'localhost',
+        logging: false,
     },
 };

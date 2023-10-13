@@ -1,7 +1,10 @@
 const router = require('express').Router();
-const { addFriendship, updateFriendship } = require('../services/friendshipsServices')
+const { addFriendship, updateFriendship, getUserByFriendshipPending, getUserFriends } = require('../services/friendshipsServices')
+const { isAuthenticated } = require('../services/loginServices')
 
-router.post('/', addFriendship)
-router.put('/:id', updateFriendship)
+router.post('/', isAuthenticated, addFriendship)
+router.get('/me/pending', isAuthenticated, getUserByFriendshipPending)
+router.get('/user/:id', isAuthenticated, getUserFriends)
+router.put('/', isAuthenticated,  updateFriendship)
 
 module.exports = router;
